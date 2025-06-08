@@ -23,7 +23,7 @@ export default async function handler(request, response) {
     return response.status(500).json({ error: 'API key is not configured on the server.' });
   }
 
-  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
   try {
     const googleApiResponse = await fetch(apiUrl, {
