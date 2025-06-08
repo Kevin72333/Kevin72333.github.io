@@ -341,7 +341,7 @@
             let chatHistory = [];
             chatHistory.push({ role: "user", parts: [{ text: promptText }] });
             const payload = { contents: chatHistory };
-            const apiKey = "";
+            const apiKey = "AIzaSyAIDPpJtkB7yKElnBvJ4oPLGofS3uJ-Lkc";
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
             try {
@@ -405,7 +405,7 @@
             let chatHistory = [];
             chatHistory.push({ role: "user", parts: [{ text: refinedPrompt }] });
             const payload = { contents: chatHistory };
-            const apiKey = "";
+            const apiKey = "AIzaSyAIDPpJtkB7yKElnBvJ4oPLGofS3uJ-Lkc";
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
             try {
