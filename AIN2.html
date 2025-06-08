@@ -144,7 +144,7 @@
             $('#templateSelector').append(`<option value="${id}">${header.name}</option>`);
         });
 
-        // 2. Main API call function (Modified for Vercel Proxy)
+        // 2. Main API call function (with improved error handling)
         async function callGeminiApi(promptText, buttonElement, targetOutputId) {
             const outputDiv = $(`#${targetOutputId}`);
             const originalButtonHTML = buttonElement.html();
@@ -158,10 +158,7 @@
             }
 
             try {
-                // *** MODIFIED: Point to your new Vercel proxy URL ***
                 const apiUrl = 'https://kevin72333-github-io.vercel.app/api/generate-text';
-                
-                // Send a simple prompt object to the proxy
                 const payload = { prompt: promptText };
 
                 const response = await fetch(apiUrl, {
@@ -170,19 +167,26 @@
                     body: JSON.stringify(payload)
                 });
                 
-                const result = await response.json();
-
-                // Handle the simpler response from the proxy
-                if (response.ok && result.text) {
-                    outputDiv.text(result.text);
-                    if (targetOutputId === outputS3DivId && result.text.trim() !== '') {
-                        copyButtonS3.show();
+                // ** IMPROVED ERROR HANDLING **
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    // It's a JSON response, proceed as normal
+                    const result = await response.json();
+                    if (response.ok) {
+                        outputDiv.text(result.text);
+                        if (targetOutputId === outputS3DivId && result.text && result.text.trim() !== '') {
+                            copyButtonS3.show();
+                        }
+                    } else {
+                        throw new Error(result.error || `代理服務請求失敗`);
                     }
                 } else {
-                    // Handle errors from the proxy or if text is missing
-                    console.error("Proxy API Error:", result.error || 'Unknown error');
-                    throw new Error(result.error || `代理服務請求失敗，狀態碼：${response.status}`);
+                    // It's not JSON, so it's likely an HTML error page from Vercel
+                    const errorText = await response.text();
+                    console.error("Received non-JSON response from proxy:", errorText);
+                    throw new Error("從代理服務收到了無效的回應。請檢查 Vercel 部署日誌 (Logs) 是否有 404 或 500 錯誤。");
                 }
+
             } catch (error) {
                 console.error('API call via proxy failed:', error);
                 outputDiv.text(`AI 呼叫失敗：${error.message}`);
