@@ -158,10 +158,10 @@
             }
 
             try {
-                // *** MODIFIED: Point to your Vercel proxy URL ***
-                const apiUrl = 'https://kevin72333-github-gro40wq2f-kevintsai723s-projects.vercel.app/api/generate-text';
+                // *** MODIFIED: Point to your new Vercel proxy URL ***
+                const apiUrl = 'https://kevin72333-github-io.vercel.app/api/generate-text';
                 
-                // *** MODIFIED: Send a simple prompt object to the proxy ***
+                // Send a simple prompt object to the proxy
                 const payload = { prompt: promptText };
 
                 const response = await fetch(apiUrl, {
@@ -172,7 +172,7 @@
                 
                 const result = await response.json();
 
-                // *** MODIFIED: Handle the simpler response from the proxy ***
+                // Handle the simpler response from the proxy
                 if (response.ok && result.text) {
                     outputDiv.text(result.text);
                     if (targetOutputId === outputS3DivId && result.text.trim() !== '') {
@@ -422,13 +422,13 @@ ${opinionText}
     請扮演一位「臨床營養師顧問」，擅長分析個案の飲食紀錄與生理數據，並提供專業的膳食調整策略。
 
     情境：
-    我需要針對一位住民的狀況進行評估。他的飲食類型是「<<<{diet_type}>>>」。
+    我需要針對一位住民の狀況進行評估。他的飲食類型是「<<<{diet_type}>>>」。
     根據近期的紀錄，他的「體重連續兩週呈現下降趨勢」，且出現「<<<{patient_symptoms}>>>」。
     我將提供他的「<<<{patient_data}>>>」等資訊。
 
     期待：
     1.請根據這些資訊，進行「綜合分析」，點出可能造成體重下降與不適の原因。
-    2.接著，提出一份「具體的飲食調整計畫」，內容需包含：
+    2.接著，提出一份「具體の飲食調整計畫」，內容需包含：
     (1)建議調整的「管灌配方、灌食速度或量」
     (2)「可額外補充的營養品建議」
     (3)「後續需要觀察的重點」。
