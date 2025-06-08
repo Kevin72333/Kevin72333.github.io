@@ -338,54 +338,48 @@
             updateAiExportButtonState();
             updateExportButtonState();
 
-           let chatHistory = [];
-chatHistory.push({ role: "user", parts: [{ text: promptText }] });
-const payload = { contents: chatHistory };
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: promptText }] });
+            const payload = { contents: chatHistory };
+            const apiKey = "AIzaSyAIDPpJtkB7yKElnBvJ4oPLGofS3uJ-Lkc";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
-// 重要的修改：
-// 1. 移除 apiKey 變數
-// 2. 將 apiUrl 改成指向你在 Vercel 上的代理路由
-const apiUrl = '/api/gemini'; //  <-- 修改這裡
-
-try {
-    const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-        const errorBody = await response.text();
-        throw new Error(`API 請求失敗，狀態碼：${response.status}，回應：${errorBody}`);
-    }
-
-    const result = await response.json();
-
-    if (result.candidates && result.candidates.length > 0 &&
-        result.candidates[0].content && result.candidates[0].content.parts &&
-        result.candidates[0].content.parts.length > 0) {
-        const text = result.candidates[0].content.parts[0].text;
-        $('#aiOutput').text(text);
-    } else {
-        let errorMessage = 'AI 未能生成內容，或回傳格式不符預期。';
-        if (result.promptFeedback && result.promptFeedback.blockReason) {
-            errorMessage += ` 原因：${result.promptFeedback.blockReason}`;
-            if (result.promptFeedback.safetyRatings) {
-                errorMessage += ` 安全性評級：${JSON.stringify(result.promptFeedback.safetyRatings)}`;
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    const errorBody = await response.text();
+                    throw new Error(`API 請求失敗，狀態碼：${response.status}，回應：${errorBody}`);
+                }
+                const result = await response.json();
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    $('#aiOutput').text(text);
+                } else {
+                    let errorMessage = 'AI 未能生成內容，或回傳格式不符預期。';
+                    if (result.promptFeedback && result.promptFeedback.blockReason) {
+                        errorMessage += ` 原因：${result.promptFeedback.blockReason}`;
+                         if (result.promptFeedback.safetyRatings) {
+                            errorMessage += ` 安全性評級：${JSON.stringify(result.promptFeedback.safetyRatings)}`;
+                        }
+                    }
+                    $('#aiOutput').text(errorMessage);
+                    console.error("Unexpected API response structure or blocked prompt:", result);
+                }
+            } catch (error) {
+                console.error('呼叫 Gemini API 時發生錯誤 (區塊3):', error);
+                $('#aiOutput').text(`AI 生成失敗：${error.message}`);
+            } finally {
+                $('#aiLoadingIndicator').hide();
+                $(this).prop('disabled', false).contents().last().replaceWith(" 使用 AI 生成內容");
+                updateAiExportButtonState();
             }
-        }
-        $('#aiOutput').text(errorMessage);
-        console.error("Unexpected API response structure or blocked prompt:", result);
-    }
-} catch (error) {
-    console.error('呼叫 API 時發生錯誤:', error);
-    $('#aiOutput').text(`AI 生成失敗：${error.message}`);
-} finally {
-    // ... 你的其餘程式碼
-    $('#aiLoadingIndicator').hide();
-    $(this).prop('disabled', false).contents().last().replaceWith(" 使用 AI 生成內容");
-    updateAiExportButtonState();
-}
+        });
 
         // 執行建議內容按鈕點擊事件 (區塊4)
         $('#executeFeedbackBtn').on('click', async function() {
