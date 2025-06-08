@@ -10,7 +10,7 @@ export default async function handler(request, response) {
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
   if (!GEMINI_API_KEY) {
-    return response.status(500).json({ error: 'API key is not configured' });
+    return response.status(500).json({ error: 'API key is not configured on Vercel' });
   }
 
   try {
@@ -26,18 +26,16 @@ export default async function handler(request, response) {
         contents: [{ role: 'user', parts: [{ text: userPrompt }] }]
       }),
     });
-    
-    if (!apiResponse.ok) {
-        const errorData = await apiResponse.json();
-        console.error('Google API Error:', errorData);
-        return response.status(apiResponse.status).json({ error: 'Failed to get response from Google API' });
-    }
 
     const data = await apiResponse.json();
+
+    if (!apiResponse.ok) {
+        console.error('Google API Error:', data);
+        return response.status(apiResponse.status).json({ error: data.error.message || 'Failed to get response from Google API' });
+    }
+
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    
-    // 將 Google API 的結果回傳給前端
-    // Vercel 會自動處理 CORS 跨域問題
+
     response.status(200).json({ text: text });
 
   } catch (error) {
