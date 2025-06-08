@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>長照業AI提示詞</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.13.2/themes/smoothness/jquery-ui.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; font-family: 'Inter', sans-serif; }
+        .navbar { box-shadow: 0 2px 4px rgba(0,0,0,.1); }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
+        .main-container { margin-top: 20px; margin-bottom: 50px; }
+        .card { border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,.05); border: none; }
+        .form-control-lg { min-height: 150px; font-family: monospace; }
+        .output-container { background-color: #e9ecef; border: 1px dashed #ced4da; padding: 20px; border-radius: 10px; position: relative; white-space: pre-wrap; word-wrap: break-word; font-family: monospace; min-height: 150px; }
+        .opinion-textarea { min-height: 100px; font-family: monospace;}
+        .copy-btn { position: absolute; top: 15px; right: 15px; }
+        .template-selector { max-width: 400px; }
+        .loading-spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            vertical-align: text-bottom;
+            border: .2em solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spinner-border .75s linear infinite;
+        }
+        @keyframes spinner-border {
+            to { transform: rotate(360deg); }
+        }
+        .btn-purple {
+            background-color: #6f42c1;
+            border-color: #6f42c1;
+            color: white;
+        }
+        .btn-purple:hover {
+            background-color: #5a359e;
+            border-color: #533191;
+            color: white;
+        }
+        .btn-teal {
+            background-color: #20c997;
+            border-color: #20c997;
+            color: white;
+        }
+        .btn-teal:hover {
+            background-color: #1baa80;
+            border-color: #179b72;
+            color: white;
+        }
+        .btn-orange {
+            background-color: #fd7e14;
+            border-color: #fd7e14;
+            color: white;
+        }
+        .btn-orange:hover {
+            background-color: #e66a00;
+            border-color: #d96400;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#"><strong>長照業AI提示詞</strong></a>
+            <div class="d-flex align-items-center">
+                <img src="https://api.dicebear.com/8.x/initials/svg?seed=User&backgroundColor=0084ff,d1d4f9,ffdfbf,ffd5dc,ffefc5" alt="User Avatar" class="user-avatar" onerror="this.src='https://placehold.co/40x40/0084ff/FFFFFF?text=U';">
+            </div>
+        </div>
+    </nav>
+    <div class="container main-container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">1. 選擇版型並填寫</h5>
+                        <select id="templateSelector" class="form-select template-selector"></select>
+                    </div>
+                    <div class="card-body p-4" id="prompt-form-container">
+                        <!-- Form fields will be dynamically inserted here -->
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">2. 生成結果 (或輸入提示詞)</h5>
+                        <button id="copyBtnS2" class="btn btn-primary copy-btn">複製</button>
+                    </div>
+                    <div class="card-body p-4">
+                        <div id="outputS2" class="output-container mb-3" contenteditable="true">請在上方欄位開始填寫，或直接在此輸入提示詞...</div>
+                        <div id="ai-utilities-containerS2" class="mt-2">
+                            <button id="executePromptToS3Btn" class="btn btn-purple ai-feature-btn mb-2">✨ 執行AI建議</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">3. AI執行結果</h5>
+                         <button id="copyBtnS3" class="btn btn-primary copy-btn" style="display:none;">複製</button>
+                    </div>
+                    <div class="card-body p-4">
+                        <div id="outputS3" class="output-container">點擊「2. 生成結果」區塊中的「✨ 執行AI建議」按鈕以在此處生成內容。</div>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">4. 提供AI意見</h5>
+                        </div>
+                    <div class="card-body p-4">
+                        <textarea id="aiOpinionTextarea" class="form-control opinion-textarea mb-3" placeholder="請在此輸入您對「3. AI執行結果」的意見或進一步指示..."></textarea>
+                        <button id="executeOpinionBtn" class="btn btn-teal ai-feature-btn mb-2">✨ 執行建議內容</button>
+                        <button id="exportDataBtn" class="btn btn-orange ai-feature-btn mb-2">📄 匯出資料</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    $(document).ready(function() {
+        const templates = {};
+        const AI_EXPLAIN_TERM_TEMPLATE_NAME = "用白話文解釋評鑑術語";
+        const outputS2DivId = 'outputS2'; 
+        const outputS3DivId = 'outputS3';
+
+        // 1. Load templates from script tags
+        $('script[type="text/template-data"]').each(function(index) {
+            const id = 'template_' + index;
+            const content = $(this).text().trim().split('---PROMPT---');
+            const header = JSON.parse(content[0]);
+            const promptText = content[1].trim();
+            templates[id] = { name: header.name, structure: header.structure, template: promptText };
+            $('#templateSelector').append(`<option value="${id}">${header.name}</option>`);
+        });
+
+        // 2. Main API call function (Modified for Vercel Proxy)
+        async function callGeminiApi(promptText, buttonElement, targetOutputId) {
+            const outputDiv = $(`#${targetOutputId}`);
+            const originalButtonHTML = buttonElement.html();
+            buttonElement.html('<span class="loading-spinner"></span> 處理中...').prop('disabled', true);
+           
+            outputDiv.html('<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p>AI 處理中，請稍候...</p></div>');
+           
+            const copyButtonS3 = $('#copyBtnS3');
+            if (targetOutputId === outputS3DivId) {
+                copyButtonS3.hide();
+            }
+
+            try {
+                // *** MODIFIED: Point to your Vercel proxy URL ***
+                const apiUrl = 'https://kevin72333-github-gro40wq2f-kevintsai723s-projects.vercel.app/api/generate-text';
+                
+                // *** MODIFIED: Send a simple prompt object to the proxy ***
+                const payload = { prompt: promptText };
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+
+                // *** MODIFIED: Handle the simpler response from the proxy ***
+                if (response.ok && result.text) {
+                    outputDiv.text(result.text);
+                    if (targetOutputId === outputS3DivId && result.text.trim() !== '') {
+                        copyButtonS3.show();
+                    }
+                } else {
+                    // Handle errors from the proxy or if text is missing
+                    console.error("Proxy API Error:", result.error || 'Unknown error');
+                    throw new Error(result.error || `代理服務請求失敗，狀態碼：${response.status}`);
+                }
+            } catch (error) {
+                console.error('API call via proxy failed:', error);
+                outputDiv.text(`AI 呼叫失敗：${error.message}`);
+            } finally {
+                buttonElement.html(originalButtonHTML).prop('disabled', false);
+            }
+        }
+
+        // 3. Form building and interaction logic (No changes needed here)
+        const buildForm = (key) => {
+            if (!key || !templates[key]) return; 
+            const formContainer = $('#prompt-form-container').empty(); 
+            const selectedTemplate = templates[key];
+            const s2Output = $(`#${outputS2DivId}`);
+
+            if (selectedTemplate.name === AI_EXPLAIN_TERM_TEMPLATE_NAME) {
+                selectedTemplate.structure.forEach(item => {
+                    const element = `<input type="text" class="form-control prompt-input" id="${item.id}" placeholder="${item.placeholder}">`;
+                    formContainer.append(`<div class="mb-3"><label for="${item.id}" class="form-label"><strong>${item.label}</strong></label>${element}</div>`);
+                });
+                const aiButton = $('<button id="directExplainBtn" class="btn btn-primary mt-2">✨ 請 AI 解釋此術語</button>');
+                aiButton.on('click', function() {
+                    const termToExplain = $(`#${selectedTemplate.structure[0].id}`).val();
+                    if (!termToExplain.trim()) {
+                        s2Output.text('請先輸入要解釋的評鑑術語。');
+                        return;
+                    }
+                    const geminiPrompt = `請用白話文解釋長照評鑑術語：「${termToExplain}」。並舉 1-2 個在日常照顧中如何尊重的例子。請確保解釋清晰易懂，適合非專業人士閱讀。`;
+                    callGeminiApi(geminiPrompt, $(this), outputS2DivId);
+                });
+                formContainer.append(aiButton);
+                s2Output.text('請輸入術語後點擊上方「✨ 請 AI 解釋此術語」按鈕。');
+            } else {
+                selectedTemplate.structure.forEach(item => {
+                    const element = item.type === 'textarea' ? 
+                        `<textarea class="form-control form-control-lg prompt-input" id="${item.id}" placeholder="${item.placeholder}"></textarea>` : 
+                        `<input type="text" class="form-control prompt-input" id="${item.id}" placeholder="${item.placeholder}">`;
+                    formContainer.append(`<div class="mb-3"><label for="${item.id}" class="form-label"><strong>${item.label}</strong></label>${element}</div>`);
+                });
+                updatePromptS2();
+            }
+        };
+
+        // 4. Update Section 2 Prompt based on form input (No changes needed here)
+        const updatePromptS2 = () => {
+            const key = $('#templateSelector').val(); 
+            const s2Output = $(`#${outputS2DivId}`);
+            if (!key || !templates[key] || templates[key].name === AI_EXPLAIN_TERM_TEMPLATE_NAME) {
+                if (templates[key] && templates[key].name === AI_EXPLAIN_TERM_TEMPLATE_NAME) {
+                } else if (!$('#prompt-form-container').children().length && templates[key]) {
+                     s2Output.text('請在上方欄位開始填寫，或直接在此輸入提示詞...');
+                }
+                return;
+            }
+           
+            let tpl = templates[key].template; 
+            templates[key].structure.forEach(item => {
+                const value = $(`#${item.id}`).val() || $(`#${item.id}`).attr('placeholder'); 
+                tpl = tpl.replace(new RegExp(`<<<{${item.id}}>>>`, 'g'), value); 
+            });
+            s2Output.text(tpl); 
+        };
+
+        // 5. Initialize and set up event listeners (No changes needed here)
+        if (Object.keys(templates).length > 0) {
+            $('#templateSelector').on('change', function() {
+                buildForm($(this).val());
+                $(`#${outputS3DivId}`).text('點擊「2. 生成結果」區塊中的「✨ 執行AI建議」按鈕以在此處生成內容。'); 
+                $('#copyBtnS3').hide();
+                $('#aiOpinionTextarea').val('');
+            }).trigger('change'); 
+
+            $('#prompt-form-container').on('input', '.prompt-input', function() {
+                const currentKey = $('#templateSelector').val();
+                if (templates[currentKey] && templates[currentKey].name !== AI_EXPLAIN_TERM_TEMPLATE_NAME) {
+                    updatePromptS2();
+                }
+            });
+        } else {
+            $('.card').hide();
+        }
+       
+        // 6. Clipboard and other button actions (No changes needed here)
+        function copyToClipboard(text, buttonElement) {
+            const tempTextarea = $('<textarea>'); 
+            $('body').append(tempTextarea); 
+            tempTextarea.val(text).select(); 
+            try {
+                document.execCommand('copy'); 
+                const originalText = buttonElement.text();
+                buttonElement.text('已複製!'); 
+                setTimeout(() => {
+                    buttonElement.text(originalText); 
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy text: ', err); 
+                const originalText = buttonElement.text();
+                buttonElement.text('複製失敗'); 
+                 setTimeout(() => {
+                    buttonElement.text(originalText); 
+                }, 2000);
+            }
+            tempTextarea.remove(); 
+        }
+
+        $('#copyBtnS2').on('click', function() {
+            const textToCopy = $(`#${outputS2DivId}`).text(); 
+            copyToClipboard(textToCopy, $(this));
+        });
+       
+        $('#copyBtnS3').on('click', function() {
+            const textToCopy = $(`#${outputS3DivId}`).text();
+            copyToClipboard(textToCopy, $(this));
+        });
+
+        $('#executePromptToS3Btn').on('click', function() {
+            const sourceTextAsPrompt = $(`#${outputS2DivId}`).text();
+            const placeholderS2 = '請在上方欄位開始填寫，或直接在此輸入提示詞...';
+            const placeholderExplain = '請輸入術語後點擊上方「✨ 請 AI 解釋此術語」按鈕。';
+
+            if (!sourceTextAsPrompt.trim() || sourceTextAsPrompt === placeholderS2 || sourceTextAsPrompt === placeholderExplain) {
+                 alert('「2. 生成結果」區塊沒有有效的提示詞可供 AI 執行。請先生成或輸入提示詞，然後點擊「執行AI建議」。');
+                return;
+            }
+            callGeminiApi(sourceTextAsPrompt, $(this), outputS3DivId);
+        });
+
+        $('#executeOpinionBtn').on('click', function() {
+            const opinionText = $('#aiOpinionTextarea').val().trim();
+            const section3Text = $(`#${outputS3DivId}`).text().trim();
+            const placeholderS3 = '點擊「2. 生成結果」區塊中的「✨ 執行AI建議」按鈕以在此處生成內容。';
+            const loadingTexts = ["AI 處理中，請稍候...", "AI 呼叫失敗", "AI 未能產生有效回應", "您的請求因以下原因被拒絕"];
+
+            if (!opinionText) {
+                alert('請在「4. 提供AI意見」區塊輸入您的意見或指示。');
+                return;
+            }
+            if (!section3Text || section3Text === placeholderS3 || loadingTexts.some(txt => section3Text.includes(txt))) {
+                 alert('「3. AI執行結果」區塊沒有有效的內容可供參考。請先執行AI建議。');
+                return;
+            }
+
+            const geminiPrompt = `請根據以下「先前AI執行結果」以及使用者提供的「意見或指示」，生成新的內容。
+
+先前AI執行結果:
+\`\`\`
+${section3Text}
+\`\`\`
+
+使用者意見或指示:
+\`\`\`
+${opinionText}
+\`\`\`
+
+請根據上述使用者意見或指示，針對「先前AI執行結果」生成更新的內容：`;
+           
+            callGeminiApi(geminiPrompt, $(this), outputS3DivId);
+        });
+
+        function exportToDoc(content, filename) {
+            const staticHTML = `<html><head><meta charset="UTF-8"></head><body>${content.replace(/\n/g, '<br>')}</body></html>`;
+            const blob = new Blob(['\ufeff', staticHTML], { 
+                type: 'application/msword;charset=utf-8'
+            });
+           
+            const link = document.createElement("a");
+            if (link.download !== undefined) { 
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            } else {
+                alert("您的瀏覽器不支援直接下載檔案。");
+            }
+        }
+
+        $('#exportDataBtn').on('click', function() {
+            const contentToExport = $(`#${outputS3DivId}`).text();
+            const placeholderS3 = '點擊「2. 生成結果」區塊中的「✨ 執行AI建議」按鈕以在此處生成內容。';
+            const loadingTexts = ["AI 處理中，請稍候...", "AI 呼叫失敗", "AI 未能產生有效回應", "您的請求因以下原因被拒絕"];
+
+            if (!contentToExport.trim() || contentToExport === placeholderS3 || loadingTexts.some(txt => contentToExport.includes(txt))) {
+                alert('「3. AI執行結果」區塊沒有內容可供匯出。');
+                return;
+            }
+            exportToDoc(contentToExport, 'AI執行結果.doc');
+        });
+       
+    });
+    </script>
+
+    <!-- Template Data Blocks (No changes needed here) -->
+    <script type="text/template-data">
+    {
+        "name": "單次活動企劃書與紀錄範本",
+        "structure": [
+            { "type": "text", "id": "activity_org_type", "label": "服務機構類型", "placeholder": "例如：社區中心、企業福委會、非營利組織" },
+            { "type": "text", "id": "activity_target_audience", "label": "目標對象", "placeholder": "例如：銀髮族、公司同仁、親子家庭" },
+            { "type": "text", "id": "activity_theme", "label": "活動主題", "placeholder": "例如：端午節懷舊粽香" },
+            { "type": "text", "id": "activity_time", "label": "預計時間", "placeholder": "例如：下個月的週三下午" }
+        ]
+    }
+    ---PROMPT---
+    角色： 
+    請你扮演一位資深的『活動企劃』，協助我發想並草擬一份專業的團體活動設計方案。
+
+    情境 ：
+    我服務於一個 <<<{activity_org_type}>>>，
+    近期需要為 <<<{activity_target_audience}>>> 規劃一個團體活動。
+    活動的主題是『<<<{activity_theme}>>>』，預計在 <<<{activity_time}>>> 舉辦。
+
+    期待 ： 
+    請為我生成一份完整的「活動設計方案」草稿，內容需包含以下結構：
+    1.「活動名稱與宗旨」
+    2.「目標對象分析」
+    3.「活動時間、地點、流程」
+    4.「所需資源與預算初估」
+    5.「預期成效與評估方式」：請建議幾個衡量活動成功與否的「關鍵指標（KPI）」。
+    6.請附上一個「活動後紀錄與成效評估」的表格範本，欄位需包含「參與狀況」、「活動回饋摘要」與「成效達成分析」。
+    </script>
+
+    <script type="text/template-data">
+    {
+        "name": "個案飲食計畫調整建議",
+        "structure": [
+            { "type": "text", "id": "diet_type", "label": "住民的飲食類型", "placeholder": "例如：管灌飲食、軟質餐、糖尿病餐" },
+            { "type": "textarea", "id": "patient_symptoms", "label": "描述具體狀況", "placeholder": "例如：消化不良、腹瀉情形、便秘" },
+            { "type": "textarea", "id": "patient_data", "label": "提供住民相關資訊", "placeholder": "例如：85歲、體重45公斤、使用「安素」配方，每日1500cc" }
+        ]
+    }
+    ---PROMPT---
+    角色：
+    請扮演一位「臨床營養師顧問」，擅長分析個案の飲食紀錄與生理數據，並提供專業的膳食調整策略。
+
+    情境：
+    我需要針對一位住民的狀況進行評估。他的飲食類型是「<<<{diet_type}>>>」。
+    根據近期的紀錄，他的「體重連續兩週呈現下降趨勢」，且出現「<<<{patient_symptoms}>>>」。
+    我將提供他的「<<<{patient_data}>>>」等資訊。
+
+    期待：
+    1.請根據這些資訊，進行「綜合分析」，點出可能造成體重下降與不適の原因。
+    2.接著，提出一份「具體的飲食調整計畫」，內容需包含：
+    (1)建議調整的「管灌配方、灌食速度或量」
+    (2)「可額外補充的營養品建議」
+    (3)「後續需要觀察的重點」。
+    3.請以「列點方式」清楚說明你的建議與理由。
+    </script>
+
+    <script type="text/template-data">
+    {
+        "name": "用白話文解釋評鑑術語",
+        "structure": [
+            { "type": "text", "id": "accreditation_term", "label": "請輸入要解釋的評鑑術語", "placeholder": "例如：住民自主權、個別化照顧、連續性照護" }
+        ]
+    }
+    ---PROMPT---
+    角色： 作為一位教育訓練專員
+
+    情境： 
+    1.解釋評鑑中常提到的<<<{accreditation_term}>>>這個概念，
+    2.用白話文說明它的意思，
+    3.並舉 1-2 個在日常照顧中如何尊重的例子。
+
+    期望： 
+    簡單易懂的解釋加上具體例子。
+    </script>
+
+    <script type="text/template-data">
+    {
+        "name": "異常事件預防與處理計畫書",
+        "structure": [
+            { "type": "textarea", "id": "prevention_measures", "label": "高風險住民的預防措施", "placeholder": "例如：防滑措施、定時翻身、營養支持" },
+            { "type": "textarea", "id": "reporting_process", "label": "事件發生時的通報與處理流程", "placeholder": "例如：發現者立即通知護理站，護理站啟動通報鏈" },
+            { "type": "textarea", "id": "rca_improvement_plan", "label": "根本原因分析 (RCA) 與改善方案", "placeholder": "例如：召開跨專業團隊會議，分析事件原因並提出改善計畫" },
+            { "type": "text", "id": "incident_report_form", "label": "事件紀錄單 (表單附件名稱)", "placeholder": "例如：住民異常事件紀錄單" },
+            { "type": "text", "id": "rca_analysis_form", "label": "RCA分析表 (表單附件名稱)", "placeholder": "例如：根本原因分析會議紀錄表" }
+        ]
+    }
+    ---PROMPT---
+    角色: 
+    請扮演一位「長照機構的護理督導或品質管理師」，協助我撰寫一份符合評鑑要求的內部管理計畫書。
+
+    情境: 
+    我需要整合並撰寫一份機構官方的「跌倒、壓瘡（褥瘡）、意外事件預防與處理計畫書」。此計畫需完整涵蓋從前端預防到後端改善的所有環節，包含：「<<<{prevention_measures}>>>」、「<<<{reporting_process}>>>」，以及事後的「<<<{rca_improvement_plan}>>>」。
+
+    期待: 
+    請為我草擬一份「結構化且完整」的計畫書範本。內容應包含明確的章節，例如：
+    1.計畫目的與政策
+    2.高風險住民「篩檢評估」與「分級照護」標準
+    3.具體的「預防介入措施」（分述跌倒、壓瘡等項目）
+    4.標準化的「事件通報與處理流程」（含對內通報與對外家屬溝通）
+    5.「根本原因分析（RCA）」的執行方式與團隊組成
+    6.「改善方案」的追蹤與成效評估機制
+    7.相關表單附件列表 (例如：<<<{incident_report_form}>>>、<<<{rca_analysis_form}>>>) 這份文件需要「流程清晰、權責分明」，可作為機構內部正式的執行與稽核依據。
+    </script>
+
+    <script type="text/template-data">
+    {
+        "name": "一週軟質飲食菜單範本",
+        "structure": [
+            { "type": "text", "id": "target_audience", "label": "供餐對象", "placeholder": "例如：長期照護機構的銀髮族" },
+            { "type": "text", "id": "dietary_needs", "label": "其他健康需求", "placeholder": "例如：低鈉、高纖維" }
+        ]
+    }
+    ---PROMPT---
+    角色：
+    請扮演一位「專業營養師助理」，專門協助設計符合特定飲食需求的週期性菜單。
+
+    情境：
+    我正在為 <<<{target_audience}>>> 設計一份為期一週的菜單。
+    這些對象普遍需要「軟質且易於消化的飲食」，同時要考量到 <<<{dietary_needs}>>> 的健康需求。
+
+    期待：
+    1.請生成一份包含「早、午、晚三餐與下午點心」的「七日菜單範本」。
+    2.菜單設計需「多樣化且食材容易取得」，並簡要說明餐點設計如何符合「軟質」與「<<<{dietary_needs}>>>」的要求。
+    3.請用「表格格式」呈現，方便我直接使用。
+    </script>
+
+    <script type="text/template-data">
+    {
+        "name": "長照機構安全與環境管理SOP",
+        "structure": [
+            { "type": "text", "id": "institution_name_sop", "label": "機構名稱", "placeholder": "請輸入您的機構全名" },
+            { "type": "text", "id": "key_fire_safety_personnel_sop", "label": "消防安全主要負責人員", "placeholder": "例如：防火管理人 王大明" },
+            { "type": "text", "id": "key_infection_control_personnel_sop", "label": "感染管制主要負責人員", "placeholder": "例如：護理長 陳小美" },
+            { "type": "textarea", "id": "specific_environmental_concern_1_sop", "label": "特定環境安全重點1 (可自行增修)", "placeholder": "例如：無障礙設施的定期檢查與維護規範" },
+            { "type": "textarea", "id": "specific_resident_safety_measure_1_sop", "label": "特定住民安全措施1 (可自行增修)", "placeholder": "例如：針對高風險跌倒住民的個別化防範計畫與紀錄" },
+            { "type": "text", "id": "emergency_contact_person_sop", "label": "緊急應變主要聯絡人", "placeholder": "例如：主任 李四" }
+        ]
+    }
+    ---PROMPT---
+    角色： 
+    請扮演一位「熟悉台灣長照機構設立標準與評鑑規範的專家」，為「<<<{institution_name_sop}>>>」建立一套完整的管理制度。
+
+    情境：
+    「<<<{institution_name_sop}>>>」是一家長照機構，為了要符合「衛福部」與地方「社會局」的規範，並為「機構評鑑」做準備，需要將「公共安全與環境檢核」制度化。
+    目前的消防安全主要由 <<<{key_fire_safety_personnel_sop}>>> 負責，感染管制則由 <<<{key_infection_control_personnel_sop}>>> 主導。
+    我們特別關注的環境安全重點包含：<<<{specific_environmental_concern_1_sop}>>>。
+    在住民安全方面，我們強調的措施有：<<<{specific_resident_safety_measure_1_sop}>>>。
+    機構的緊急應變主要聯絡人為 <<<{emergency_contact_person_sop}>>>。
+
+    檢核內容需涵蓋法規要求的所有面向，包括：「消防安全計畫與演練」、「建築物公安申報」、「無障礙設施維護」，並特別強化「感染管制程序」、「住民跌倒與意外事件預防機制」、「緊急災害應變計畫（特別是針對行動不便者的疏散）」以及「廚房膳食衛生安全」。
+
+    期待：
+    請為我草擬一份「<<<{institution_name_sop}>>> 長照機構安全與環境管理標準作業程序（SOP）」。文件需「架構完整、條理分明」，並在適當處「引述相關法規名稱或評鑑條文重點」。內容應包含：
+    1. 各項檢核作業的「負責人、執行頻率、作業說明、檢查標準」(請參考上述情境中的負責人資訊)。
+    2. 住民「安全風險評估」的流程與方法 (請考量 <<<{specific_resident_safety_measure_1_sop}>>>)。
+    3. 「異常事件的通報、處理與檢討改善」流程。
+    4. 所有「紀錄表單的留存與管理」規範。
+    目標是讓這份文件成為機構營運與迎接評鑑的核心指南。
+    </script>
+
+    <script type="text/template-data">
+    {
+        "name": "常用工作簡易查檢表",
+        "structure": [
+            { "type": "textarea", "id": "checklist_topic", "label": "請輸入查檢表的主題與重點項目", "placeholder": "例如：5-7 個重點項目的「護理人員交班」簡易查檢表" }
+        ]
+    }
+    ---PROMPT---
+    角色： 作為一位資深護理長
+
+    情境： 
+    為了確保交班時資訊完整，減少評鑑時被指出交班紀錄缺失的風險，
+    請設計一份包含<<<{checklist_topic}>>>。
+
+    期望：
+    提供條列式查檢表。
+    </script>
+
+    <script type="text/template-data">
+    {
+        "name": "每日護理紀錄範本",
+        "structure": [
+            { "type": "text", "id": "care_facility_type", "label": "照護機構類型", "placeholder": "例如：護理之家、安養中心" },
+            { "type": "text", "id": "patient_diagnosis", "label": "個案主要診斷", "placeholder": "例如：中風後失能、糖尿病" }
+        ]
+    }
+    ---PROMPT---
+    角色：請扮演一位「資深護理長」，指導我如何撰寫一份結構完整、符合臨床標準的護理紀錄。
+
+    情境：
+    我正在照顧一位住在 <<<{care_facility_type}>>> 的個案，
+    他的主要健康問題是 <<<{patient_diagnosis}>>>。
+    我需要完成今天的護理紀錄，內容應包含生命徵象、給藥、執行的護理活動，以及相關的風險評估。
+
+    期待：
+    1.請生成一份「結構化」的護理紀錄範本，讓我能快速填寫。內容需包含「生命徵象」、「給藥紀錄」、「傷口護理」、「健康問題處理」等基本區塊。
+    2.請特別加入「跌倒風險」與「壓瘡風險」的評估項目，並在需要填寫具體觀察或數據的地方預留[填寫處]，格式要「清晰條列、一目了然」。
+    </script>
+
+
+    <script type="text/template-data">
+    {
+        "name": "感染管制計畫書大綱",
+        "structure": [
+            { "type": "text", "id": "institution_type_medical", "label": "機構類型", "placeholder": "例如：醫院、護理之家、診所" }
+        ]
+    }
+    ---PROMPT---
+    角色： 
+    請扮演一位「醫療管理顧問」，專精於撰寫院內規章與作業流程。
+
+    情境：
+    1.我是一位 <<<{institution_type_medical}>>> 的管理者，需要為我們的機構草擬一份完整的「感染管制計畫書」。
+    2.這份計畫書必須涵蓋幾個核心面向：洗手時機與步驟、環境消毒標準、廢棄物分類處理、特定傳染病（如流感、肺炎、疥瘡）的監測、通報及隔離處理流程，以及工作人員的健康管理辦法。
+
+    期待： 
+    1.請為我生成一份「結構化、條理分明」的感染管制計畫書「大綱範本」。範本應包含上述所有核心面向的「章節標題」，並在每個標題下列出「建議應包含的重點內容（以列點方式呈現）」。
+    2.此外，請特別加入一個關於「PDCA 持續改善」的章節，說明應如何「設定監測指標（如：院內感染率）」以及「規劃改善活動的流程」。
+    </script>
+
+
+    <script type="text/template-data">
+    {
+        "name": "提升住民社交互動活動構想",
+        "structure": [
+            { "type": "textarea", "id": "resident_characteristics", "label": "我們機構住民的特性", "placeholder": "例如：平均年齡 80 歲，多為輕度失能，部分有認知障礙" }
+        ]
+    }
+    ---PROMPT---
+    角色： 「作為一位活動企劃人員」。
+
+    情境與任務： 
+    針對評鑑指標中「提升住民社交互動參與率」的要求，
+    根據我們機構住民的特性<<<{resident_characteristics}>>>，
+    發想下個季度可以執行的 3-5 個團體活動初步構想。
+
+    期望： 
+    用非正式的語氣，並使用條列式重點。
+    </script>
+
+    <script type="text/template-data">
+    {
+        "name": "撰寫工作流程標準作業程序（SOP）",
+        "structure": [
+            { "type": "text", "id": "sop_topic", "label": "SOP主題", "placeholder": "例如：住民洗澡、餵食、翻身拍背" },
+            { "type": "text", "id": "sop_purpose", "label": "此SOP的目的", "placeholder": "例如：確保住民在過程中的安全、舒適與尊嚴" },
+            { "type": "text", "id": "sop_personnel", "label": "主要執行人員", "placeholder": "例如：照服員、護理師" },
+            { "type": "textarea", "id": "sop_key_points", "label": "流程中的關鍵注意事項", "placeholder": "例如：水溫控制、防滑措施、隱私維護、觀察皮膚狀況" }
+        ]
+    }
+    ---PROMPT---
+    角色：
+    請扮演一位「長照機構的SOP撰寫專家」，擅長將複雜的照護工作拆解成清晰、可執行的標準化流程。
+
+    情境：
+    我需要為機構建立一份關於「<<<{sop_topic}>>>」的標準作業程序（SOP）。
+    這份SOP的主要目的是「<<<{sop_purpose}>>>」，將由「<<<{sop_personnel}>>>」執行。
+    在執行過程中，有幾個關鍵點需要特別注意，包括「<<<{sop_key_points}>>>」。
+
+    期待：
+    請為我草擬一份結構完整的SOP文件範本。內容需包含以下幾個部分：
+    1.  **目的**：明確說明此SOP的目標。
+    2.  **適用範圍與人員**：定義哪些情境與人員應遵循此流程。
+    3.  **準備工作**：條列出執行前需要準備的用物與環境確認事項。
+    4.  **作業流程步驟**：以「條列式」或「編號」方式，詳細說明執行的每一個步驟。
+    5.  **關鍵注意事項與風險管理**：針對情境中提到的關鍵點，說明具體的執行標準與應對方法。
+    6.  **完成後處理**：說明工作結束後的整理、紀錄事項。
+    7.  **附件**：附上一個簡易的「執行紀錄查檢表」範本，方便執行人員確認。
+    </script>
+
+</body>
+</html>
