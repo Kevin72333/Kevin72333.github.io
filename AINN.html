@@ -148,7 +148,7 @@
     <!-- Bootstrap Bundle JS (includes Popper) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     
-   
+  
 
     <script>
     $(document).ready(function() {
@@ -309,8 +309,6 @@
         $('#copyBtn').on('click', () => {
             const textToCopy = $('#output').text();
             if (textToCopy === '請在上方欄位開始填寫...' || textToCopy === '請選擇一個模板...') {
-                // 使用一個更美觀的提示方式，例如 Bootstrap Toast 或 Modal
-                // 暫時用 alert
                 alert('沒有內容可以複製！');
                 return;
             }
@@ -343,31 +341,16 @@
             });
         });
 
-        // AI生成按鈕點擊事件 (區塊3)
-        $('#generateAiBtn').on('click', async function() {
-            const promptText = $('#output').text();
-            if (promptText === '請在上方欄位開始填寫...' || promptText === '請選擇一個模板...') {
-                alert('請先產生或選擇有效的提示詞！');
-                return;
-            }
-
-            $('#aiLoadingIndicator').show();
-            $(this).prop('disabled', true);
-            $(this).find('span').next().text(" AI 生成中...");
-            $('#aiOutput').text('AI 正在生成內容，請稍候...');
-            $('#aiFeedbackInput').val('');
-            $('#refinedAiOutput').text('AI 根據您的意見生成的內容將顯示在這裡...');
-            updateAiExportButtonState();
-            updateExportButtonState();
-
-            // *** 使用 Vercel 代理呼叫 API ***
+        // 通用的 AI 呼叫函式
+        async function callApi(payload, outputElementId, loadingIndicatorId, buttonElement) {
             const apiUrl = 'https://kevin72333-github-io.vercel.app/';
-            const payload = {
-                contents: [{
-                    role: "user",
-                    parts: [{ text: promptText }]
-                }]
-            };
+            const outputElement = $(`#${outputElementId}`);
+            const loadingIndicator = $(`#${loadingIndicatorId}`);
+            const originalButtonText = buttonElement.contents().last().text().trim();
+
+            loadingIndicator.show();
+            buttonElement.prop('disabled', true).contents().last().replaceWith(` AI 處理中...`);
+            outputElement.text('AI 正在生成內容，請稍候...');
 
             try {
                 const response = await fetch(apiUrl, {
@@ -375,16 +358,25 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
+
                 if (!response.ok) {
-                    const errorBody = await response.json();
-                    throw new Error(`API 請求失敗，狀態碼：${response.status}，回應：${JSON.stringify(errorBody)}`);
+                    const errorText = await response.text();
+                    let errorDetail = errorText;
+                    try {
+                        // 嘗試解析為 JSON 以獲得更詳細的錯誤資訊
+                        errorDetail = JSON.stringify(JSON.parse(errorText));
+                    } catch (e) {
+                        // 如果不是 JSON，則直接顯示原始文字
+                    }
+                    throw new Error(`API 請求失敗，狀態碼：${response.status}，回應：${errorDetail}`);
                 }
+
                 const result = await response.json();
                 if (result.candidates && result.candidates.length > 0 &&
                     result.candidates[0].content && result.candidates[0].content.parts &&
                     result.candidates[0].content.parts.length > 0) {
                     const text = result.candidates[0].content.parts[0].text;
-                    $('#aiOutput').text(text);
+                    outputElement.text(text);
                 } else {
                     let errorMessage = 'AI 未能生成內容，或回傳格式不符預期。';
                     if (result.promptFeedback && result.promptFeedback.blockReason) {
@@ -393,18 +385,38 @@
                             errorMessage += ` 安全性評級：${JSON.stringify(result.promptFeedback.safetyRatings)}`;
                         }
                     }
-                    $('#aiOutput').text(errorMessage);
+                    outputElement.text(errorMessage);
                     console.error("Unexpected API response structure or blocked prompt:", result);
                 }
             } catch (error) {
-                console.error('呼叫 API 時發生錯誤 (區塊3):', error);
-                $('#aiOutput').text(`AI 生成失敗：${error.message}`);
+                console.error('呼叫 API 時發生錯誤:', error);
+                outputElement.text(`AI 生成失敗：${error.message}`);
             } finally {
-                $('#aiLoadingIndicator').hide();
-                $(this).prop('disabled', false);
-                $(this).find('span').next().text(" 使用 AI 生成內容");
+                loadingIndicator.hide();
+                buttonElement.prop('disabled', false).contents().last().replaceWith(` ${originalButtonText}`);
                 updateAiExportButtonState();
+                updateExportButtonState();
             }
+        }
+
+        // AI生成按鈕點擊事件 (區塊3)
+        $('#generateAiBtn').on('click', async function() {
+            const promptText = $('#output').text();
+            if (promptText === '請在上方欄位開始填寫...' || promptText === '請選擇一個模板...') {
+                alert('請先產生或選擇有效的提示詞！');
+                return;
+            }
+
+            $('#aiFeedbackInput').val('');
+            $('#refinedAiOutput').text('AI 根據您的意見生成的內容將顯示在這裡...');
+            
+            const payload = {
+                contents: [{
+                    role: "user",
+                    parts: [{ text: promptText }]
+                }]
+            };
+            callApi(payload, 'aiOutput', 'aiLoadingIndicator', $(this));
         });
 
         // 執行建議內容按鈕點擊事件 (區塊4)
@@ -420,61 +432,15 @@
                 alert('請在「您的意見或進一步指示」中輸入內容！');
                 return;
             }
-
-            $('#feedbackLoadingIndicator').show();
-            $(this).prop('disabled', true);
-            $(this).find('span').next().text(" AI 處理中...");
-            $('#refinedAiOutput').text('AI 正在根據您的意見生成內容，請稍候...');
-            updateExportButtonState();
-
-            const refinedPrompt = `這是先前AI生成的內容：\n\n"${previousAiOutput}"\n\n請根據以下意見修改或擴展上述內容：\n\n"${feedbackText}"`;
             
-            // *** 使用 Vercel 代理呼叫 API ***
-            const apiUrl = 'https://kevin72333-github-io.vercel.app/';
+            const refinedPrompt = `這是先前AI生成的內容：\n\n"${previousAiOutput}"\n\n請根據以下意見修改或擴展上述內容：\n\n"${feedbackText}"`;
             const payload = {
                 contents: [{
                     role: "user",
                     parts: [{ text: refinedPrompt }]
                 }]
             };
-
-
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if (!response.ok) {
-                     const errorBody = await response.json();
-                    throw new Error(`API 請求失敗，狀態碼：${response.status}，回應：${JSON.stringify(errorBody)}`);
-                }
-                const result = await response.json();
-                if (result.candidates && result.candidates.length > 0 &&
-                    result.candidates[0].content && result.candidates[0].content.parts &&
-                    result.candidates[0].content.parts.length > 0) {
-                    const text = result.candidates[0].content.parts[0].text;
-                    $('#refinedAiOutput').text(text);
-                } else {
-                     let errorMessage = 'AI 未能根據意見生成內容，或回傳格式不符預期。';
-                        if (result.promptFeedback && result.promptFeedback.blockReason) {
-                            errorMessage += ` 原因：${result.promptFeedback.blockReason}`;
-                            if (result.promptFeedback.safetyRatings) {
-                                errorMessage += ` 安全性評級：${JSON.stringify(result.promptFeedback.safetyRatings)}`;
-                            }
-                        }
-                    $('#refinedAiOutput').text(errorMessage);
-                    console.error("Unexpected API response structure or blocked prompt (區塊4):", result);
-                }
-            } catch (error) {
-                console.error('呼叫 API 時發生錯誤 (區塊4):', error);
-                $('#refinedAiOutput').text(`AI 根據意見生成失敗：${error.message}`);
-            } finally {
-                $('#feedbackLoadingIndicator').hide();
-                $(this).prop('disabled', false);
-                $(this).find('span').next().text(" 執行建議內容");
-                updateExportButtonState();
-            }
+            callApi(payload, 'refinedAiOutput', 'feedbackLoadingIndicator', $(this));
         });
         
         // 通用的匯出函式
@@ -532,8 +498,8 @@
         updateExportButtonState();
     });
     </script>
-</body>
-</html>
+
+
 
     <!-- 以下為模板資料，每個script標籤代表一個模板 -->
     <script type="text/template-data">
