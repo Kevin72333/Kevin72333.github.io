@@ -383,14 +383,12 @@
             updateAiExportButtonState();
             updateExportButtonState();
 
-            // *** MODIFIED PAYLOAD ***
-            // Removed the optional 'role' field to simplify the object.
             const payload = {
                 contents: [{
                     parts: [{ text: promptText }]
                 }]
             };
-            const apiUrl = '/api/generate'; // 路由到 Vercel 代理
+            const apiUrl = 'https://kevin72333-github-io.vercel.app/api/generate-text'; // 路由到 Vercel 代理
 
             try {
                 const response = await fetch(apiUrl, {
@@ -450,14 +448,12 @@
 
             const refinedPrompt = `這是先前AI生成的內容：\n\n"${previousAiOutput}"\n\n請根據以下意見修改或擴展上述內容：\n\n"${feedbackText}"`;
 
-            // *** MODIFIED PAYLOAD ***
-            // Removed the optional 'role' field to simplify the object.
             const payload = {
                 contents: [{
                     parts: [{ text: refinedPrompt }]
                 }]
             };
-            const apiUrl = '/api/generate'; // 路由到 Vercel 代理
+            const apiUrl = 'https://kevin72333-github-io.vercel.app/api/generate-text'; // 路由到 Vercel 代理
 
             try {
                 const response = await fetch(apiUrl, {
@@ -570,6 +566,8 @@
         updateExportButtonState();
     });
     </script>
+</body>
+</html>
 
 
 
