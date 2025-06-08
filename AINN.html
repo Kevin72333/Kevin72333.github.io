@@ -10,19 +10,16 @@
     <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.13.2/themes/smoothness/jquery-ui.css">
     <!-- Bootstrap Icons CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #f8f9fa; font-family: 'Noto Sans TC', 'Inter', sans-serif; }
+        body { background-color: #f8f9fa; font-family: 'Inter', sans-serif; }
         .navbar { box-shadow: 0 2px 4px rgba(0,0,0,.1); }
         /* 使用者頭像樣式 */
         .user-avatar { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
         .main-container { margin-top: 20px; margin-bottom: 50px; }
         .card { border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,.05); border: none; }
-        .form-control-lg { min-height: 150px; font-family: 'Noto Sans TC', monospace; }
+        .form-control-lg { min-height: 150px; font-family: monospace; }
         /* 輸出容器樣式 */
-        .output-container { background-color: #e9ecef; border: 1px dashed #ced4da; padding: 20px; border-radius: 10px; position: relative; white-space: pre-wrap; word-wrap: break-word; font-family: 'Noto Sans TC', monospace; min-height: 150px; }
+        .output-container { background-color: #e9ecef; border: 1px dashed #ced4da; padding: 20px; border-radius: 10px; position: relative; white-space: pre-wrap; word-wrap: break-word; font-family: monospace; min-height: 150px; }
         .copy-btn { position: absolute; top: 15px; right: 15px; }
         .template-selector-group { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; }
         .template-selector { max-width: 350px; }
@@ -141,14 +138,14 @@
         </div>
     </div>
 
+   
+
     <!-- jQuery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <!-- jQuery UI -->
     <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
     <!-- Bootstrap Bundle JS (includes Popper) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    
-  
 
     <script>
     $(document).ready(function() {
@@ -157,13 +154,9 @@
 
         // 1. 載入模板並提取分類
         $('script[type="text/template-data"]').each(function(index) {
-            const id = $(this).attr('id') || 'template_' + index; // 使用 script 的 id 或產生唯一ID
+            const id = 'template_' + index; // 為每個模板產生唯一ID
             try {
                 const content = $(this).text().trim().split('---PROMPT---'); // 分割模板資料與提示詞
-                if (content.length < 2) {
-                    console.error("模板格式不正確，缺少 '---PROMPT---' 分隔符:", id);
-                    return; // 跳過這個模板
-                }
                 const header = JSON.parse(content[0]); // 解析模板資料
                 const prompt = content[1].trim(); // 取得提示詞內容
 
@@ -195,9 +188,8 @@
         const updateAiExportButtonState = () => {
             const aiOutputText = $('#aiOutput').text();
             const isAiOutputValid = aiOutputText !== 'AI 生成的內容將顯示在這裡...' &&
-                                  !aiOutputText.startsWith('AI 正在生成內容') &&
-                                  !aiOutputText.startsWith('AI 生成失敗') &&
-                                  !aiOutputText.startsWith('AI 未能生成內容');
+                                    !aiOutputText.startsWith('AI 生成失敗') &&
+                                    !aiOutputText.startsWith('AI 未能生成內容');
             $('#exportAiOutputBtn').prop('disabled', !isAiOutputValid);
         };
 
@@ -205,9 +197,8 @@
         const updateExportButtonState = () => {
             const refinedOutputText = $('#refinedAiOutput').text();
             const isRefinedOutputValid = refinedOutputText !== 'AI 根據您的意見生成的內容將顯示在這裡...' &&
-                                         !refinedOutputText.startsWith('AI 正在根據您') &&
-                                         !refinedOutputText.startsWith('AI 根據意見生成失敗') &&
-                                         !refinedOutputText.startsWith('AI 未能根據意見生成內容');
+                                           !refinedOutputText.startsWith('AI 根據意見生成失敗') &&
+                                           !refinedOutputText.startsWith('AI 未能根據意見生成內容');
             $('#exportWordBtn').prop('disabled', !isRefinedOutputValid);
         };
 
@@ -229,31 +220,31 @@
             } else {
                 // 如果沒有符合的模板，顯示提示訊息
                 $('#prompt-form-container').empty().html('<p class="text-center text-muted">此分類下沒有可用的模板。</p>');
-                    $('#output').text('請選擇一個模板...');
-                    $('#aiOutput').text('AI 生成的內容將顯示在這裡...');
-                    $('#aiFeedbackInput').val('');
-                    $('#refinedAiOutput').text('AI 根據您的意見生成的內容將顯示在這裡...');
-                    updateAiExportButtonState();
-                    updateExportButtonState();
+                $('#output').text('請選擇一個模板...');
+                $('#aiOutput').text('AI 生成的內容將顯示在這裡...');
+                $('#aiFeedbackInput').val('');
+                $('#refinedAiOutput').text('AI 根據您的意見生成的內容將顯示在這裡...');
+                updateAiExportButtonState();
+                updateExportButtonState();
             }
         };
 
         // 建立表單的函式
         const buildForm = (key) => {
             if (!key || !templates[key]) { // 如果沒有選擇模板或模板不存在
-                    $('#prompt-form-container').empty();
-                    $('#output').text('請選擇一個模板...');
-                    $('#aiOutput').text('AI 生成的內容將顯示在這裡...');
-                    $('#aiFeedbackInput').val('');
-                    $('#refinedAiOutput').text('AI 根據您的意見生成的內容將顯示在這裡...');
-                    updateAiExportButtonState();
-                    updateExportButtonState();
+                $('#prompt-form-container').empty();
+                $('#output').text('請選擇一個模板...');
+                $('#aiOutput').text('AI 生成的內容將顯示在這裡...');
+                $('#aiFeedbackInput').val('');
+                $('#refinedAiOutput').text('AI 根據您的意見生成的內容將顯示在這裡...');
+                updateAiExportButtonState();
+                updateExportButtonState();
                 return;
             };
             const formContainer = $('#prompt-form-container').empty();
             templates[key].structure.forEach(item => {
                 const element = item.type === 'textarea' ?
-                    `<textarea class="form-control form-control-lg prompt-input" id="${item.id}" placeholder="${item.placeholder}" rows="5"></textarea>` :
+                    `<textarea class="form-control form-control-lg prompt-input" id="${item.id}" placeholder="${item.placeholder}"></textarea>` :
                     `<input type="text" class="form-control prompt-input" id="${item.id}" placeholder="${item.placeholder}">`;
                 formContainer.append(`<div class="mb-3"><label for="${item.id}" class="form-label"><strong>${item.label}</strong></label>${element}</div>`);
             });
@@ -266,26 +257,16 @@
             if (!key || !templates[key]) return;
 
             let tpl = templates[key].template;
-            let allFilled = true;
             templates[key].structure.forEach(item => {
-                const inputElement = $(`#${item.id}`);
-                let val = inputElement.val();
-                if(!val){
-                    val = inputElement.attr('placeholder');
-                    allFilled = false;
-                }
+                const val = $(`#${item.id}`).val() || $(`#${item.id}`).attr('placeholder');
                 tpl = tpl.replace(new RegExp(`<<<{${item.id}}>>>`, 'g'), val);
             });
             $('#output').text(tpl);
-
-            // 只有在所有欄位都填寫後，才清空後續區塊
-            if (allFilled) {
-               $('#aiOutput').text('AI 生成的內容將顯示在這裡...');
-               $('#aiFeedbackInput').val('');
-               $('#refinedAiOutput').text('AI 根據您的意見生成的內容將顯示在這裡...');
-               updateAiExportButtonState();
-               updateExportButtonState();
-            }
+            $('#aiOutput').text('AI 生成的內容將顯示在這裡...');
+            $('#aiFeedbackInput').val('');
+            $('#refinedAiOutput').text('AI 根據您的意見生成的內容將顯示在這裡...');
+            updateAiExportButtonState();
+            updateExportButtonState();
         };
 
         if (Object.keys(templates).length > 0) {
@@ -301,8 +282,10 @@
 
             populateDropdown('all');
         } else {
-            // 如果沒有任何模板，隱藏所有主要卡片並顯示提示
-             $('.main-container').html('<div class="text-center"><p class="text-muted fs-4">目前沒有可用的提示詞模板。</p><p>請檢查您的 HTML 檔案中是否包含 `&lt;script type="text/template-data"&gt;` 區塊。</p></div>');
+            $('.card').first().hide();
+            $('.card').eq(1).hide();
+            $('.card').eq(2).hide();
+            $('.card').eq(3).hide();
         }
 
         // 複製按鈕點擊事件 (複製提示詞)
@@ -341,64 +324,6 @@
             });
         });
 
-        // 通用的 AI 呼叫函式
-        async function callApi(payload, outputElementId, loadingIndicatorId, buttonElement) {
-            const apiUrl = 'https://kevin72333-github-io.vercel.app/';
-            const outputElement = $(`#${outputElementId}`);
-            const loadingIndicator = $(`#${loadingIndicatorId}`);
-            const originalButtonText = buttonElement.contents().last().text().trim();
-
-            loadingIndicator.show();
-            buttonElement.prop('disabled', true).contents().last().replaceWith(` AI 處理中...`);
-            outputElement.text('AI 正在生成內容，請稍候...');
-
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    let errorDetail = errorText;
-                    try {
-                        // 嘗試解析為 JSON 以獲得更詳細的錯誤資訊
-                        errorDetail = JSON.stringify(JSON.parse(errorText));
-                    } catch (e) {
-                        // 如果不是 JSON，則直接顯示原始文字
-                    }
-                    throw new Error(`API 請求失敗，狀態碼：${response.status}，回應：${errorDetail}`);
-                }
-
-                const result = await response.json();
-                if (result.candidates && result.candidates.length > 0 &&
-                    result.candidates[0].content && result.candidates[0].content.parts &&
-                    result.candidates[0].content.parts.length > 0) {
-                    const text = result.candidates[0].content.parts[0].text;
-                    outputElement.text(text);
-                } else {
-                    let errorMessage = 'AI 未能生成內容，或回傳格式不符預期。';
-                    if (result.promptFeedback && result.promptFeedback.blockReason) {
-                        errorMessage += ` 原因：${result.promptFeedback.blockReason}`;
-                        if (result.promptFeedback.safetyRatings) {
-                            errorMessage += ` 安全性評級：${JSON.stringify(result.promptFeedback.safetyRatings)}`;
-                        }
-                    }
-                    outputElement.text(errorMessage);
-                    console.error("Unexpected API response structure or blocked prompt:", result);
-                }
-            } catch (error) {
-                console.error('呼叫 API 時發生錯誤:', error);
-                outputElement.text(`AI 生成失敗：${error.message}`);
-            } finally {
-                loadingIndicator.hide();
-                buttonElement.prop('disabled', false).contents().last().replaceWith(` ${originalButtonText}`);
-                updateAiExportButtonState();
-                updateExportButtonState();
-            }
-        }
-
         // AI生成按鈕點擊事件 (區塊3)
         $('#generateAiBtn').on('click', async function() {
             const promptText = $('#output').text();
@@ -407,16 +332,57 @@
                 return;
             }
 
+            $('#aiLoadingIndicator').show();
+            $(this).prop('disabled', true).contents().last().replaceWith(" AI 生成中...");
+            $('#aiOutput').text('AI 正在生成內容，請稍候...');
             $('#aiFeedbackInput').val('');
             $('#refinedAiOutput').text('AI 根據您的意見生成的內容將顯示在這裡...');
-            
+            updateAiExportButtonState();
+            updateExportButtonState();
+
             const payload = {
                 contents: [{
                     role: "user",
                     parts: [{ text: promptText }]
                 }]
             };
-            callApi(payload, 'aiOutput', 'aiLoadingIndicator', $(this));
+            const apiUrl = '/api/generate'; // 路由到 Vercel 代理
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    const errorBody = await response.text();
+                    throw new Error(`API 請求失敗，狀態碼：${response.status}，回應：${errorBody}`);
+                }
+                const result = await response.json();
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    $('#aiOutput').text(text);
+                } else {
+                    let errorMessage = 'AI 未能生成內容，或回傳格式不符預期。';
+                    if (result.promptFeedback && result.promptFeedback.blockReason) {
+                        errorMessage += ` 原因：${result.promptFeedback.blockReason}`;
+                        if (result.promptFeedback.safetyRatings) {
+                            errorMessage += ` 安全性評級：${JSON.stringify(result.promptFeedback.safetyRatings)}`;
+                        }
+                    }
+                    $('#aiOutput').text(errorMessage);
+                    console.error("Unexpected API response structure or blocked prompt:", result);
+                }
+            } catch (error) {
+                console.error('呼叫代理 API 時發生錯誤 (區塊3):', error);
+                $('#aiOutput').text(`AI 生成失敗：${error.message}`);
+            } finally {
+                $('#aiLoadingIndicator').hide();
+                $(this).prop('disabled', false).contents().last().replaceWith(" 使用 AI 生成內容");
+                updateAiExportButtonState();
+            }
         });
 
         // 執行建議內容按鈕點擊事件 (區塊4)
@@ -432,28 +398,71 @@
                 alert('請在「您的意見或進一步指示」中輸入內容！');
                 return;
             }
-            
+
+            $('#feedbackLoadingIndicator').show();
+            $(this).prop('disabled', true).contents().last().replaceWith(" AI 處理中...");
+            $('#refinedAiOutput').text('AI 正在根據您的意見生成內容，請稍候...');
+            updateExportButtonState();
+
             const refinedPrompt = `這是先前AI生成的內容：\n\n"${previousAiOutput}"\n\n請根據以下意見修改或擴展上述內容：\n\n"${feedbackText}"`;
+
             const payload = {
                 contents: [{
                     role: "user",
                     parts: [{ text: refinedPrompt }]
                 }]
             };
-            callApi(payload, 'refinedAiOutput', 'feedbackLoadingIndicator', $(this));
-        });
-        
-        // 通用的匯出函式
-        function exportToDoc(content, defaultFileName) {
-            if (!content || content.startsWith('AI') || content.startsWith('請')) {
-                 alert('沒有有效的內容可以匯出！');
-                 return;
+            const apiUrl = '/api/generate'; // 路由到 Vercel 代理
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    const errorBody = await response.text();
+                    throw new Error(`API 請求失敗，狀態碼：${response.status}，回應：${errorBody}`);
+                }
+                const result = await response.json();
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    $('#refinedAiOutput').text(text);
+                } else {
+                    let errorMessage = 'AI 未能根據意見生成內容，或回傳格式不符預期。';
+                    if (result.promptFeedback && result.promptFeedback.blockReason) {
+                        errorMessage += ` 原因：${result.promptFeedback.blockReason}`;
+                        if (result.promptFeedback.safetyRatings) {
+                            errorMessage += ` 安全性評級：${JSON.stringify(result.promptFeedback.safetyRatings)}`;
+                        }
+                    }
+                    $('#refinedAiOutput').text(errorMessage);
+                    console.error("Unexpected API response structure or blocked prompt (區塊4):", result);
+                }
+            } catch (error) {
+                console.error('呼叫代理 API 時發生錯誤 (區塊4):', error);
+                $('#refinedAiOutput').text(`AI 根據意見生成失敗：${error.message}`);
+            } finally {
+                $('#feedbackLoadingIndicator').hide();
+                $(this).prop('disabled', false).contents().last().replaceWith(" 執行建議內容");
+                updateExportButtonState();
             }
-            // 將換行符 \n 轉換為 <br>
-            const formattedContent = content.replace(/\n/g, "<br>");
-            // 建立完整的 HTML 結構
-            const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${defaultFileName}</title></head><body>${formattedContent}</body></html>`;
-            const blob = new Blob(['\uFEFF', htmlContent], { type: 'application/msword;charset=utf-8' });
+        });
+
+        // 匯出 "3. AI生成資料" 按鈕點擊事件
+        $('#exportAiOutputBtn').on('click', function() {
+            const contentToExport = $('#aiOutput').text();
+            const defaultFileName = "ai_initial_generated_content.doc";
+
+            if (contentToExport === 'AI 生成的內容將顯示在這裡...' || contentToExport.startsWith('AI 生成失敗') || contentToExport.startsWith('AI 未能生成內容')) {
+                alert('沒有有效的AI內容可以匯出！');
+                return;
+            }
+
+            const htmlContent = `<html><head><meta charset="UTF-8"></head><body>${contentToExport.replace(/\n/g, "<br>")}</body></html>`;
+            const blob = new Blob([htmlContent], { type: 'application/msword;charset=utf-8' });
             const link = document.createElement("a");
 
             if (link.download !== undefined) {
@@ -468,17 +477,35 @@
             } else {
                 alert("您的瀏覽器不支援自動下載功能，請手動複製內容。");
             }
-        }
-
-        // 匯出 "3. AI生成資料" 按鈕點擊事件
-        $('#exportAiOutputBtn').on('click', function() {
-            exportToDoc($('#aiOutput').text(), "ai_initial_generated_content.doc");
         });
 
 
         // 匯出 "4. 優化資料" 按鈕點擊事件
         $('#exportWordBtn').on('click', function() {
-            exportToDoc($('#refinedAiOutput').text(), "ai_refined_content.doc");
+            const contentToExport = $('#refinedAiOutput').text();
+            const defaultFileName = "ai_refined_content.doc";
+
+            if (contentToExport === 'AI 根據您的意見生成的內容將顯示在這裡...' || contentToExport.startsWith('AI 根據意見生成失敗') || contentToExport.startsWith('AI 未能根據意見生成內容')) {
+                alert('沒有有效的優化內容可以匯出！');
+                return;
+            }
+
+            const htmlContent = `<html><head><meta charset="UTF-8"></head><body>${contentToExport.replace(/\n/g, "<br>")}</body></html>`;
+            const blob = new Blob([htmlContent], { type: 'application/msword;charset=utf-8' });
+            const link = document.createElement("a");
+
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", defaultFileName);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            } else {
+                alert("您的瀏覽器不支援自動下載功能，請手動複製內容。");
+            }
         });
 
 
