@@ -138,51 +138,6 @@
         </div>
     </div>
 
-    <!-- 範本資料 -->
-    <script type="text/template-data">
-        {
-            "name": "社群媒體貼文產生器",
-            "category": "行銷",
-            "structure": [
-                { "id": "topic", "label": "主題", "type": "text", "placeholder": "例如: 一款新的環保咖啡杯" },
-                { "id": "platform", "label": "平台", "type": "text", "placeholder": "例如: Facebook, Instagram" },
-                { "id": "tone", "label": "語氣", "type": "text", "placeholder": "例如: 活潑、專業、親切" },
-                { "id": "extra", "label": "其他要求 (選填)", "type": "textarea", "placeholder": "例如: 包含一個提問、加入 CTA (Call to Action)" }
-            ]
-        }
-        ---PROMPT---
-        請為一個關於「<<< {topic} >>>」的主題，撰寫一篇適用於 <<< {platform} >>> 平台的社群媒體貼文。
-        這篇貼文的語氣應該是 <<< {tone} >>>。
-        <<< {extra} >>>
-    </script>
-
-    <script type="text/template-data">
-        {
-            "name": "電子郵件主旨產生器",
-            "category": "溝通",
-            "structure": [
-                { "id": "goal", "label": "郵件目標", "type": "text", "placeholder": "例如: 產品推廣、會議邀請" },
-                { "id": "audience", "label": "目標受眾", "type": "text", "placeholder": "例如: 既有客戶、潛在合作夥伴" },
-                { "id": "keyword", "label": "關鍵字 (選填)", "type": "text", "placeholder": "例如: 限時優惠、獨家預覽" }
-            ]
-        }
-        ---PROMPT---
-        請為一封目標是「<<< {goal} >>>」，受眾是「<<< {audience} >>>」的電子郵件，產生 5 個吸引人的主旨。
-        如果適用，請包含關鍵字「<<< {keyword} >>>」。
-    </script>
-    
-    <script type="text/template-data">
-        {
-            "name": "公司口號產生器",
-            "category": "行銷",
-            "structure": [
-                { "id": "company_name", "label": "公司/品牌名稱", "type": "text", "placeholder": "例如: Coca-Cola" }
-            ]
-        }
-        ---PROMPT---
-        請為名為「<<< {company_name} >>>」的公司，產生 5 個響亮、有創意且令人印象深刻的口號 (slogan)。
-    </script>
-
     <!-- jQuery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <!-- jQuery UI -->
@@ -231,8 +186,8 @@
         const updateAiExportButtonState = () => {
             const aiOutputText = $('#aiOutput').text();
             const isAiOutputValid = aiOutputText !== 'AI 生成的內容將顯示在這裡...' &&
-                                    !aiOutputText.startsWith('AI 生成失敗') &&
-                                    !aiOutputText.startsWith('AI 未能生成內容');
+                                      !aiOutputText.startsWith('AI 生成失敗') &&
+                                      !aiOutputText.startsWith('AI 未能生成內容');
             $('#exportAiOutputBtn').prop('disabled', !isAiOutputValid);
         };
 
@@ -383,12 +338,11 @@
             updateAiExportButtonState();
             updateExportButtonState();
 
-            const payload = {
-                contents: [{
-                    parts: [{ text: promptText }]
-                }]
-            };
-            const apiUrl = 'https://kevin72333-github-io.vercel.app/api/generate-text'; // 路由到 Vercel 代理
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: promptText }] });
+            const payload = { contents: chatHistory };
+            // *** MODIFIED: Using Vercel proxy URL instead of direct Google API endpoint and API Key ***
+            const apiUrl = 'https://kevin72333-github-io.vercel.app/api/generate-text';
 
             try {
                 const response = await fetch(apiUrl, {
@@ -410,15 +364,15 @@
                     let errorMessage = 'AI 未能生成內容，或回傳格式不符預期。';
                     if (result.promptFeedback && result.promptFeedback.blockReason) {
                         errorMessage += ` 原因：${result.promptFeedback.blockReason}`;
-                        if (result.promptFeedback.safetyRatings) {
-                            errorMessage += ` 安全性評級：${JSON.stringify(result.promptFeedback.safetyRatings)}`;
-                        }
+                         if (result.promptFeedback.safetyRatings) {
+                             errorMessage += ` 安全性評級：${JSON.stringify(result.promptFeedback.safetyRatings)}`;
+                         }
                     }
                     $('#aiOutput').text(errorMessage);
                     console.error("Unexpected API response structure or blocked prompt:", result);
                 }
             } catch (error) {
-                console.error('呼叫代理 API 時發生錯誤 (區塊3):', error);
+                console.error('呼叫 API 時發生錯誤 (區塊3):', error);
                 $('#aiOutput').text(`AI 生成失敗：${error.message}`);
             } finally {
                 $('#aiLoadingIndicator').hide();
@@ -448,12 +402,11 @@
 
             const refinedPrompt = `這是先前AI生成的內容：\n\n"${previousAiOutput}"\n\n請根據以下意見修改或擴展上述內容：\n\n"${feedbackText}"`;
 
-            const payload = {
-                contents: [{
-                    parts: [{ text: refinedPrompt }]
-                }]
-            };
-            const apiUrl = 'https://kevin72333-github-io.vercel.app/api/generate-text'; // 路由到 Vercel 代理
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: refinedPrompt }] });
+            const payload = { contents: chatHistory };
+             // *** MODIFIED: Using Vercel proxy URL instead of direct Google API endpoint and API Key ***
+            const apiUrl = 'https://kevin72333-github-io.vercel.app/api/generate-text';
 
             try {
                 const response = await fetch(apiUrl, {
@@ -473,17 +426,17 @@
                     $('#refinedAiOutput').text(text);
                 } else {
                     let errorMessage = 'AI 未能根據意見生成內容，或回傳格式不符預期。';
-                    if (result.promptFeedback && result.promptFeedback.blockReason) {
-                        errorMessage += ` 原因：${result.promptFeedback.blockReason}`;
-                        if (result.promptFeedback.safetyRatings) {
-                            errorMessage += ` 安全性評級：${JSON.stringify(result.promptFeedback.safetyRatings)}`;
-                        }
+                     if (result.promptFeedback && result.promptFeedback.blockReason) {
+                         errorMessage += ` 原因：${result.promptFeedback.blockReason}`;
+                          if (result.promptFeedback.safetyRatings) {
+                             errorMessage += ` 安全性評級：${JSON.stringify(result.promptFeedback.safetyRatings)}`;
+                         }
                     }
                     $('#refinedAiOutput').text(errorMessage);
                     console.error("Unexpected API response structure or blocked prompt (區塊4):", result);
                 }
             } catch (error) {
-                console.error('呼叫代理 API 時發生錯誤 (區塊4):', error);
+                console.error('呼叫 API 時發生錯誤 (區塊4):', error);
                 $('#refinedAiOutput').text(`AI 根據意見生成失敗：${error.message}`);
             } finally {
                 $('#feedbackLoadingIndicator').hide();
