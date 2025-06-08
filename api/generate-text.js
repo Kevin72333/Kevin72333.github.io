@@ -1,4 +1,4 @@
-// /api/generate-text.js  (偵錯專用版本)
+// /api/generate-text.js (安全的正式版本)
 
 const allowedOrigin = 'https://kevin72333-github-io.vercel.app';
 
@@ -16,16 +16,13 @@ export default async function handler(request, response) {
     return response.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  // --- 決定性的測試點 ---
-  // ⚠️ 警告：僅供偵錯！請直接將您的 Gemini API Key 貼在引號中間。
-  // 測試完後必須立刻刪除此行，並換回 process.env.GEMINI_API_KEY
-  const apiKey = "AIzaSyAIDPpJtkB7yKElnBvJ4oPLGofS3uJ-Lkc"; 
+  // 恢復成從環境變數讀取，這是安全作法
+  const apiKey = process.env.GEMINI_API_KEY;
 
-  // 如果上面那行 apiKey 是空的或是 "請在這裡..."，就直接報錯
-  if (!apiKey || apiKey.startsWith("請在這裡")) {
-    return response.status(500).json({ error: 'API Key not hardcoded for debugging.' });
+  if (!apiKey) {
+    return response.status(500).json({ error: 'API key is not configured on the server.' });
   }
-  
+
   const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
   try {
