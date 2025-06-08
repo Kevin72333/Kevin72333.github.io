@@ -338,23 +338,25 @@
             updateAiExportButtonState();
             updateExportButtonState();
 
-            let chatHistory = [];
-            chatHistory.push({ role: "user", parts: [{ text: promptText }] });
-            const payload = { contents: chatHistory };
-            // *** MODIFIED: Using Vercel proxy URL instead of direct Google API endpoint and API Key ***
+            // *** MODIFIED: Create a simpler payload for the Vercel proxy. ***
+            // The proxy likely expects an object like { "prompt": "..." } 
+            // and builds the full request for the Google API itself.
+            const payloadForProxy = { prompt: promptText };
             const apiUrl = 'https://kevin72333-github-io.vercel.app/api/generate-text';
 
             try {
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(payloadForProxy)
                 });
                 if (!response.ok) {
                     const errorBody = await response.text();
                     throw new Error(`API 請求失敗，狀態碼：${response.status}，回應：${errorBody}`);
                 }
                 const result = await response.json();
+                
+                // Assuming the proxy returns the same structure as the Gemini API
                 if (result.candidates && result.candidates.length > 0 &&
                     result.candidates[0].content && result.candidates[0].content.parts &&
                     result.candidates[0].content.parts.length > 0) {
@@ -402,23 +404,23 @@
 
             const refinedPrompt = `這是先前AI生成的內容：\n\n"${previousAiOutput}"\n\n請根據以下意見修改或擴展上述內容：\n\n"${feedbackText}"`;
 
-            let chatHistory = [];
-            chatHistory.push({ role: "user", parts: [{ text: refinedPrompt }] });
-            const payload = { contents: chatHistory };
-             // *** MODIFIED: Using Vercel proxy URL instead of direct Google API endpoint and API Key ***
+            // *** MODIFIED: Create a simpler payload for the Vercel proxy. ***
+            const payloadForProxy = { prompt: refinedPrompt };
             const apiUrl = 'https://kevin72333-github-io.vercel.app/api/generate-text';
 
             try {
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(payloadForProxy)
                 });
                 if (!response.ok) {
                     const errorBody = await response.text();
                     throw new Error(`API 請求失敗，狀態碼：${response.status}，回應：${errorBody}`);
                 }
                 const result = await response.json();
+
+                // Assuming the proxy returns the same structure as the Gemini API
                 if (result.candidates && result.candidates.length > 0 &&
                     result.candidates[0].content && result.candidates[0].content.parts &&
                     result.candidates[0].content.parts.length > 0) {
@@ -521,7 +523,6 @@
     </script>
 </body>
 </html>
-
 
 
     <!-- 以下為模板資料，每個script標籤代表一個模板 -->
