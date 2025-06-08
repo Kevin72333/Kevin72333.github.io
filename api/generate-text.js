@@ -19,7 +19,7 @@ export default async function handler(request, response) {
   // --- 決定性的測試點 ---
   // ⚠️ 警告：僅供偵錯！請直接將您的 Gemini API Key 貼在引號中間。
   // 測試完後必須立刻刪除此行，並換回 process.env.GEMINI_API_KEY
-  const apiKey = "請在這裡直接貼上您的Gemini-API-金鑰"; 
+  const apiKey = "AIzaSyAIDPpJtkB7yKElnBvJ4oPLGofS3uJ-Lkc"; 
 
   // 如果上面那行 apiKey 是空的或是 "請在這裡..."，就直接報錯
   if (!apiKey || apiKey.startsWith("請在這裡")) {
