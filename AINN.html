@@ -156,11 +156,42 @@
         // 2. 建立並附加篩選按鈕
         const filterContainer = $('#category-filters');
         if (categories.size > 0) {
-            filterContainer.append('<button class="btn btn-secondary btn-sm me-2 filter-btn active" data-category="all">全部顯示</button>'); // 新增"全部顯示"按鈕
-            categories.forEach(category => {
-                filterContainer.append(`<button class="btn btn-outline-secondary btn-sm me-2 filter-btn" data-category="${category}">${category}</button>`); // 為每個分類新增按鈕
+            // ==================== 修改開始 ====================
+
+            // 1. 清空主容器並建立三個橫排容器
+            filterContainer.empty();
+            filterContainer.append('<div id="filter-row-1" class="mb-2"></div>');
+            filterContainer.append('<div id="filter-row-2" class="mb-2"></div>');
+            filterContainer.append('<div id="filter-row-3" class="mb-2"></div>');
+
+            // 2. 取得對新橫排容器的引用
+            const row1 = $('#filter-row-1');
+            const row2 = $('#filter-row-2');
+            const row3 = $('#filter-row-3');
+
+            // 3. 將 "全部顯示" 按鈕放入第一排
+            row1.append('<button class="btn btn-secondary btn-sm me-2 filter-btn active" data-category="all">全部顯示</button>');
+
+            // 4. 將 Set 轉換為 Array 以便使用索引
+            const categoryArray = Array.from(categories);
+
+            // 5. 遍歷分類陣列並將按鈕分配到第二和第三排
+            categoryArray.forEach((category, index) => {
+                const buttonHtml = `<button class="btn btn-outline-secondary btn-sm me-2 filter-btn" data-category="${category}">${category}</button>`;
+                
+                if (index < 8) {
+                    // 第二排 (前 8 個分類)
+                    row2.append(buttonHtml);
+                } else if (index < 16) {
+                    // 第三排 (第 9 到 16 個分類)
+                    row3.append(buttonHtml);
+                }
+                // 根據您的要求，超過 16 個的分類將不會被顯示
             });
+
+            // ==================== 修改結束 ====================
         }
+
 
         // 更新 "匯出AI生成資料" 按鈕狀態的函式
         const updateAiExportButtonState = () => {
@@ -321,9 +352,7 @@
             let chatHistory = [];
             chatHistory.push({ role: "user", parts: [{ text: promptText }] });
             const payload = { contents: chatHistory };
-        
-            const apiUrl = "https://kevin72333-github-io.vercel.app/api/generate-text"; // 改為您的Vercel代理URL
-            
+            const apiUrl = "https://kevin72333-github-io.vercel.app/api/generate-text"; 
 
             try {
                 const response = await fetch(apiUrl, {
@@ -386,9 +415,7 @@
             let chatHistory = [];
             chatHistory.push({ role: "user", parts: [{ text: refinedPrompt }] });
             const payload = { contents: chatHistory };
-          
-            const apiUrl = "https://kevin72333-github-io.vercel.app/api/generate-text"; // 改為您的Vercel代理URL
-         
+            const apiUrl = "https://kevin72333-github-io.vercel.app/api/generate-text";
 
             try {
                 const response = await fetch(apiUrl, {
@@ -502,8 +529,6 @@
     });
     </script>
 
-</body>
-</html>
 
     <!-- 以下為模板資料，每個script標籤代表一個模板 -->
     <script type="text/template-data">
