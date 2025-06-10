@@ -14,7 +14,7 @@
         .user-avatar { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
         .main-container { margin-top: 20px; margin-bottom: 50px; }
         .card { border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,.05); border: none; }
-        .form-control-lg { min-height: 600px; font-family: monospace; }
+        .form-control-lg { min-height: 150px; font-family: monospace; }
         /* 輸出容器樣式 */
         .output-container { background-color: #e9ecef; border: 1px dashed #ced4da; padding: 20px; border-radius: 10px; position: relative; white-space: pre-wrap; word-wrap: break-word; font-family: monospace; min-height: 150px; }
         .copy-btn { position: absolute; top: 15px; right: 15px; }
@@ -72,7 +72,7 @@
                 <div class="card mt-4">
                     <div class="card-header bg-white"><h5 class="mb-0">2. 複製生成結果</h5></div>
                     <div class="card-body p-4">
-                         <textarea id="output" class="form-control output-container">請在上方欄位開始填寫...</textarea>
+                        <div id="output" class="output-container">請在上方欄位開始填寫...</div>
                         <button id="copyBtn" class="btn btn-primary copy-btn">複製</button>
                     </div>
                 </div>
