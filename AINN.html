@@ -16,7 +16,17 @@
         .card { border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,.05); border: none; }
         .form-control-lg { min-height: 150px; font-family: monospace; }
         /* 輸出容器樣式 */
-        .output-container { background-color: #e9ecef; border: 1px dashed #ced4da; padding: 20px; border-radius: 10px; position: relative; white-space: pre-wrap; word-wrap: break-word; font-family: monospace; min-height: 150px; }
+        .output-container { 
+            background-color: #e9ecef; 
+            border: 1px dashed #ced4da; 
+            padding: 20px; 
+            border-radius: 10px; 
+            position: relative; 
+            white-space: pre-wrap; 
+            word-wrap: break-word; 
+            font-family: monospace; 
+            min-height: 150px; 
+        }
         .copy-btn { position: absolute; top: 15px; right: 15px; }
         .template-selector-group { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; }
         .template-selector { max-width: 350px; }
@@ -70,9 +80,9 @@
                     </div>
                 </div>
                 <div class="card mt-4">
-                    <div class="card-header bg-white"><h5 class="mb-0">2. 複製生成結果</h5></div>
-                    <div class="card-body p-4">
-                        <div id="output" class="output-container">請在上方欄位開始填寫...</div>
+                    <div class="card-header bg-white"><h5 class="mb-0">2. 可修改的生成結果</h5></div>
+                    <div class="card-body p-4 position-relative">
+                        <textarea id="output" class="form-control output-container" style="resize: none; overflow-y: hidden;">請在上方欄位開始填寫...</textarea>
                         <button id="copyBtn" class="btn btn-primary copy-btn">複製</button>
                     </div>
                 </div>
@@ -129,6 +139,14 @@
     $(document).ready(function() {
         const templates = {}; // 儲存所有模板
         const categories = new Set(); // 儲存所有分類
+        const outputTextarea = document.getElementById('output');
+
+        // 自動調整textarea高度的函式
+        const autoResizeTextarea = (elem) => {
+            if (!elem) return;
+            elem.style.height = 'auto'; // 暫時縮小以重新計算scrollHeight
+            elem.style.height = elem.scrollHeight + 'px'; // 將高度設為滾動高度
+        };
 
         // 1. 載入模板並提取分類
         $('script[type="text/template-data"]').each(function(index) {
@@ -156,40 +174,26 @@
         // 2. 建立並附加篩選按鈕
         const filterContainer = $('#category-filters');
         if (categories.size > 0) {
-            // ==================== 修改開始 ====================
-
-            // 1. 清空主容器並建立三個橫排容器
             filterContainer.empty();
             filterContainer.append('<div id="filter-row-1" class="mb-2"></div>');
             filterContainer.append('<div id="filter-row-2" class="mb-2"></div>');
             filterContainer.append('<div id="filter-row-3" class="mb-2"></div>');
 
-            // 2. 取得對新橫排容器的引用
             const row1 = $('#filter-row-1');
             const row2 = $('#filter-row-2');
             const row3 = $('#filter-row-3');
 
-            // 3. 將 "全部顯示" 按鈕放入第一排
             row1.append('<button class="btn btn-secondary btn-sm me-2 filter-btn active" data-category="all">全部顯示</button>');
-
-            // 4. 將 Set 轉換為 Array 以便使用索引
             const categoryArray = Array.from(categories);
 
-            // 5. 遍歷分類陣列並將按鈕分配到第二和第三排
             categoryArray.forEach((category, index) => {
                 const buttonHtml = `<button class="btn btn-outline-secondary btn-sm me-2 filter-btn" data-category="${category}">${category}</button>`;
-                
                 if (index < 8) {
-                    // 第二排 (前 8 個分類)
                     row2.append(buttonHtml);
                 } else if (index < 16) {
-                    // 第三排 (第 9 到 16 個分類)
                     row3.append(buttonHtml);
                 }
-                // 根據您的要求，超過 16 個的分類將不會被顯示
             });
-
-            // ==================== 修改結束 ====================
         }
 
 
@@ -214,46 +218,47 @@
 
         // 3. 根據篩選條件填入下拉選單的函式
         const populateDropdown = (filterCategory) => {
-            const selector = $('#templateSelector').empty(); // 清空下拉選單
-            let hasOptions = false; // 標記是否有選項加入
+            const selector = $('#templateSelector').empty();
+            let hasOptions = false;
             Object.keys(templates).forEach(id => {
                 const template = templates[id];
-                if (filterCategory === 'all' || template.category === filterCategory) { // 如果符合篩選條件
-                    selector.append(`<option value="${id}">${template.name}</option>`); // 加入選項
+                if (filterCategory === 'all' || template.category === filterCategory) {
+                    selector.append(`<option value="${id}">${template.name}</option>`);
                     hasOptions = true;
                 }
             });
 
             if (hasOptions) {
-                selector.trigger('change'); // 如果有選項，觸發change事件以載入第一個模板的表單
+                selector.trigger('change');
             } else {
-                // 如果沒有符合的模板，顯示提示訊息
                 $('#prompt-form-container').empty().html('<p class="text-center text-muted">此分類下沒有可用的模板。</p>');
-                $('#output').text('請選擇一個模板...');
+                $('#output').val('請選擇一個模板...');
                 $('#aiOutput').text('AI 生成的內容將顯示在這裡...');
                 $('#aiFeedbackInput').val('');
                 $('#refinedAiOutput').text('AI 根據您的意見生成的內容將顯示在這裡...');
                 updateAiExportButtonState();
                 updateExportButtonState();
+                autoResizeTextarea(outputTextarea);
             }
         };
 
         // 建立表單的函式
         const buildForm = (key) => {
-            if (!key || !templates[key]) { // 如果沒有選擇模板或模板不存在
+            if (!key || !templates[key]) {
                 $('#prompt-form-container').empty();
-                $('#output').text('請選擇一個模板...');
+                $('#output').val('請選擇一個模板...');
                 $('#aiOutput').text('AI 生成的內容將顯示在這裡...');
                 $('#aiFeedbackInput').val('');
                 $('#refinedAiOutput').text('AI 根據您的意見生成的內容將顯示在這裡...');
                 updateAiExportButtonState();
                 updateExportButtonState();
+                autoResizeTextarea(outputTextarea);
                 return;
             };
             const formContainer = $('#prompt-form-container').empty();
             templates[key].structure.forEach(item => {
                 const element = item.type === 'textarea' ?
-                    `<textarea class="form-control form-control-lg prompt-input" id="${item.id}" placeholder="${item.placeholder}"></textarea>` :
+                    `<textarea class="form-control form-control-lg prompt-input" id="${item.id}" placeholder="${item.placeholder}" style="min-height: 150px;"></textarea>` :
                     `<input type="text" class="form-control prompt-input" id="${item.id}" placeholder="${item.placeholder}">`;
                 formContainer.append(`<div class="mb-3"><label for="${item.id}" class="form-label"><strong>${item.label}</strong></label>${element}</div>`);
             });
@@ -270,12 +275,13 @@
                 const val = $(`#${item.id}`).val() || $(`#${item.id}`).attr('placeholder');
                 tpl = tpl.replace(new RegExp(`<<<{${item.id}}>>>`, 'g'), val);
             });
-            $('#output').text(tpl);
+            $('#output').val(tpl);
             $('#aiOutput').text('AI 生成的內容將顯示在這裡...');
             $('#aiFeedbackInput').val('');
             $('#refinedAiOutput').text('AI 根據您的意見生成的內容將顯示在這裡...');
             updateAiExportButtonState();
             updateExportButtonState();
+            autoResizeTextarea(outputTextarea);
         };
 
         if (Object.keys(templates).length > 0) {
@@ -288,18 +294,26 @@
 
             $('#templateSelector').on('change', () => buildForm($('#templateSelector').val()));
             $('#prompt-form-container').on('input', '.prompt-input', updatePrompt);
+            
+            // 監聽手動編輯 output textarea 的事件
+            $('#output').on('input', function() {
+                autoResizeTextarea(this);
+                // 當使用者手動編輯提示詞時，清除後續的 AI 結果
+                $('#aiOutput').text('AI 生成的內容將顯示在這裡...');
+                $('#aiFeedbackInput').val('');
+                $('#refinedAiOutput').text('AI 根據您的意見生成的內容將顯示在這裡...');
+                updateAiExportButtonState();
+                updateExportButtonState();
+            });
 
             populateDropdown('all');
         } else {
-            $('.card').first().hide();
-            $('.card').eq(1).hide();
-            $('.card').eq(2).hide();
-            $('.card').eq(3).hide();
+            $('.card').hide();
         }
 
         // 複製按鈕點擊事件 (複製提示詞)
         $('#copyBtn').on('click', () => {
-            const textToCopy = $('#output').text();
+            const textToCopy = $('#output').val();
             if (textToCopy === '請在上方欄位開始填寫...' || textToCopy === '請選擇一個模板...') {
                 alert('沒有內容可以複製！');
                 return;
@@ -335,7 +349,7 @@
 
         // AI生成按鈕點擊事件 (區塊3)
         $('#generateAiBtn').on('click', async function() {
-            const promptText = $('#output').text();
+            const promptText = $('#output').val();
             if (promptText === '請在上方欄位開始填寫...' || promptText === '請選擇一個模板...') {
                 alert('請先產生或選擇有效的提示詞！');
                 return;
@@ -438,7 +452,7 @@
                      if (result.promptFeedback && result.promptFeedback.blockReason) {
                          errorMessage += ` 原因：${result.promptFeedback.blockReason}`;
                           if (result.promptFeedback.safetyRatings) {
-                             errorMessage += ` 安全性評級：${JSON.stringify(result.promptFeedback.safetyRatings)}`;
+                              errorMessage += ` 安全性評級：${JSON.stringify(result.promptFeedback.safetyRatings)}`;
                          }
                      }
                     $('#refinedAiOutput').text(errorMessage);
@@ -528,6 +542,10 @@
         updateExportButtonState();
     });
     </script>
+
+
+ 
+
 
 
     <!-- 以下為模板資料，每個script標籤代表一個模板 -->
